@@ -10,8 +10,9 @@ import java.util.function.Function;
 
 public class ExpirableMap<K,V> implements Map<K,V> {
 
-    public static final int DEFAULT_TIMEOUT = 10_000; //ten seconds
-    private WeakHashMap<K, V> internalMap;
+    protected static final int DEFAULT_TIMEOUT = 10_000; //ten seconds
+
+    protected Map<K, V> internalMap;
 
     private long timeout;
 
