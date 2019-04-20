@@ -3,45 +3,60 @@ package com.lorescianatico.expirablemap;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class ExpirableMap<K,V> implements Map<K,V> {
 
+    public static final int DEFAULT_TIMEOUT = 10_000; //ten seconds
+    private WeakHashMap<K, V> internalMap;
+
+    private long timeout;
+
+    public ExpirableMap() {
+        this(DEFAULT_TIMEOUT);
+    }
+
+    public ExpirableMap(long timeout) {
+        this.timeout = timeout;
+        this.internalMap = new WeakHashMap<>();
+    }
+
     @Override
     public int size() {
-        return 0;
+        return internalMap.size();
     }
 
     @Override
     public boolean isEmpty() {
-        return false;
+        return this.internalMap.isEmpty();
     }
 
     @Override
     public boolean containsKey(Object key) {
-        return false;
+        return this.internalMap.containsKey(key);
     }
 
     @Override
     public boolean containsValue(Object value) {
-        return false;
+        return this.internalMap.containsValue(value);
     }
 
     @Override
     public V get(Object key) {
-        return null;
+        return this.internalMap.get(key);
     }
 
     @Override
     public V put(K key, V value) {
-        return null;
+        return this.internalMap.put(key, value);
     }
 
     @Override
     public V remove(Object key) {
-        return null;
+        return this.internalMap.remove(key);
     }
 
     @Override
