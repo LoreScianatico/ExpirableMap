@@ -82,7 +82,7 @@ public class ExpirableMap<K,V> implements Map<K,V> {
 
     @Override
     public Set<Entry<K, V>> entrySet() {
-        return null;
+        return this.internalMap.entrySet();
     }
 
     @Override

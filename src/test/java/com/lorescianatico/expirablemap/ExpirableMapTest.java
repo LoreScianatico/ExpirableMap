@@ -120,7 +120,12 @@ class ExpirableMapTest {
 
     @Test
     void entrySet() {
-        fail("Not yet implemented.");
+        Map<String, String> map = new ExpirableMap<>();
+        assertEquals(0, map.keySet().size());
+        map.put("A", "a");
+        map.put("B", "b");
+        map.put("C", "c");
+        assertEquals(3, map.entrySet().size());
     }
 
     @Test
