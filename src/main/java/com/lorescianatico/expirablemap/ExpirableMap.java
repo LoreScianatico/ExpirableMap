@@ -62,22 +62,22 @@ public class ExpirableMap<K,V> implements Map<K,V> {
 
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
-
+        this.internalMap.putAll(m);
     }
 
     @Override
     public void clear() {
-
+        this.internalMap.clear();
     }
 
     @Override
     public Set<K> keySet() {
-        return null;
+        return this.internalMap.keySet();
     }
 
     @Override
     public Collection<V> values() {
-        return null;
+        return this.internalMap.values();
     }
 
     @Override
