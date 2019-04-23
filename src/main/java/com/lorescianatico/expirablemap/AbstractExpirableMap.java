@@ -1,9 +1,6 @@
 package com.lorescianatico.expirablemap;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -111,5 +108,48 @@ abstract class AbstractExpirableMap<K, V> {
 
     public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         return this.internalMap.merge(key, value, remappingFunction);
+    }
+
+    static class ExpirableValue<V>{
+
+        private static final ExpirableValue EMPTY = of(null);
+
+        private V value;
+
+        private long timestamp;
+
+        private ExpirableValue(V value) {
+            this.value = value;
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        public boolean hasExpired(){
+            return System.currentTimeMillis() > this.timestamp;
+        }
+
+        public Optional<V> getValueAsOptional(){
+            return Optional.ofNullable(this.value);
+        }
+
+        public static <V> ExpirableValue<V> empty(){
+            return (ExpirableValue<V>) EMPTY;
+        }
+
+        public static <V> ExpirableValue<V> of(V value){
+            return new ExpirableValue<>(value);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ExpirableValue<?> that = (ExpirableValue<?>) o;
+            return Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(value);
+        }
     }
 }
