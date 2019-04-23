@@ -87,12 +87,12 @@ public class ExpirableMap<K,V> implements Map<K,V> {
 
     @Override
     public V getOrDefault(Object key, V defaultValue) {
-        return null;
+        return this.internalMap.getOrDefault(key, defaultValue);
     }
 
     @Override
     public void forEach(BiConsumer<? super K, ? super V> action) {
-
+        this.internalMap.forEach(action);
     }
 
     @Override

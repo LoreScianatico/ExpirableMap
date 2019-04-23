@@ -130,12 +130,17 @@ class ExpirableMapTest {
 
     @Test
     void getOrDefault() {
-        fail("Not yet implemented.");
+        Map<String, String> map = new ExpirableMap<>();
+        map.put("A", "a");
+        assertEquals("a", map.getOrDefault("A", "b"));
+        assertEquals("b", map.getOrDefault("B", "b"));
     }
 
     @Test
     void forEach() {
-        fail("Not yet implemented.");
+        Map<String, String> map = new ExpirableMap<>();
+        map.put("A", "a");
+        map.forEach((k,v) -> {assertNotNull(k); assertNotNull(v);});
     }
 
     @Test
