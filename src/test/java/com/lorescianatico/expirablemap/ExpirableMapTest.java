@@ -145,46 +145,75 @@ class ExpirableMapTest {
 
     @Test
     void replaceAll() {
-        fail("Not yet implemented.");
+        Map<String, String> map = new ExpirableMap<>();
+        map.put("A", "a");
+        map.replaceAll((k, v) -> v+k);
+        assertEquals("aA", map.get("A"));
     }
 
     @Test
     void putIfAbsent() {
-        fail("Not yet implemented.");
+        Map<String, String> map = new ExpirableMap<>();
+        map.put("A", "a");
+        assertEquals("a", map.putIfAbsent("A", "b"));
+        assertNull(map.putIfAbsent("B", "b"));
+        assertEquals("b", map.get("B"));
     }
 
     @Test
     void remove1() {
-        fail("Not yet implemented.");
+        Map<String, String> map = new ExpirableMap<>();
+        map.put("A", "a");
+        assertFalse(map.remove("B", "b"));
+        assertFalse(map.remove("A", "b"));
+        assertTrue(map.remove("A", "a"));
     }
 
     @Test
     void replace() {
-        fail("Not yet implemented.");
+        Map<String, String> map = new ExpirableMap<>();
+        map.put("A", "a");
+        assertFalse(map.replace("B", "b", "b"));
+        assertFalse(map.replace("A", "b", "a"));
+        assertTrue(map.replace("A", "a", "b"));
     }
 
     @Test
     void replace1() {
-        fail("Not yet implemented.");
+        Map<String, String> map = new ExpirableMap<>();
+        map.put("A", "a");
+        assertNull(map.replace("B", "b"));
+        assertEquals("a",map.replace("A", "b"));
+        assertEquals("b",map.get("A"));
     }
 
     @Test
     void computeIfAbsent() {
-        fail("Not yet implemented.");
+        Map<String, String> map = new ExpirableMap<>();
+        map.put("A", "a");
+        assertEquals("b", map.computeIfAbsent("B", String::toLowerCase));
     }
 
     @Test
     void computeIfPresent() {
-        fail("Not yet implemented.");
+        Map<String, String> map = new ExpirableMap<>();
+        map.put("A", "a");
+        assertEquals("Aa",map.computeIfPresent("A", (k, v)->k+v));
     }
 
     @Test
     void compute() {
-        fail("Not yet implemented.");
+        Map<String, String> map = new ExpirableMap<>();
+        map.put("A", "a");
+        assertEquals("Aa",map.compute("A", (k, v)->k+v));
+        assertEquals("b",map.compute("B", (k, v)->k.toLowerCase()));
     }
 
     @Test
     void merge() {
-        fail("Not yet implemented.");
+        Map<String, String> map = new ExpirableMap<>();
+        map.put("A", "a");
+        assertEquals("ab",map.merge("A", "b", (v1, v2)->v1+v2));
+        assertEquals("b",map.merge("B", "b", (v1, v2)->v1.toLowerCase()));
     }
 }
