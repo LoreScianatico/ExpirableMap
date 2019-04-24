@@ -4,16 +4,17 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 abstract class AbstractExpirableMap<K, V> {
 
     protected static final int DEFAULT_TIMEOUT = 10_000; //ten seconds
 
-    protected Map<K, V> internalMap;
+    protected Map<K, ExpirableValue<V>> internalMap;
 
     protected long timeout;
 
-    public AbstractExpirableMap(long timeout) {
+    AbstractExpirableMap(long timeout) {
         this.internalMap = new WeakHashMap<>();
         this.timeout = timeout;
     }
@@ -31,23 +32,31 @@ abstract class AbstractExpirableMap<K, V> {
     }
 
     public boolean containsValue(Object value) {
-        return this.internalMap.containsValue(value);
+        return this.internalMap.containsValue(ExpirableValue.of(value));
     }
 
     public V get(Object key) {
-        return this.internalMap.get(key);
+        ExpirableValue<V> value = this.internalMap.get(key);
+        if(value != null) {
+            return value.getValue();
+        }
+        return null;
     }
 
     public V put(K key, V value) {
-        return this.internalMap.put(key, value);
+        ExpirableValue<V> previousValue = this.internalMap.put(key, ExpirableValue.of(value));
+        if (previousValue != null){
+            return previousValue.getValue();
+        }
+        return null;
     }
 
     public V remove(Object key) {
-        return this.internalMap.remove(key);
+        return this.internalMap.remove(key).getValue();
     }
 
     public void putAll(Map<? extends K, ? extends V> m) {
-        this.internalMap.putAll(m);
+        m.forEach((k, v) -> this.internalMap.put(k, ExpirableValue.of(v)));
     }
 
     public void clear() {
@@ -59,55 +68,75 @@ abstract class AbstractExpirableMap<K, V> {
     }
 
     public Collection<V> values() {
-        return this.internalMap.values();
+        return this.internalMap.values().stream()
+                .filter(value -> value.getValue()!=null)
+                .map(ExpirableValue::getValue)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public Set<Map.Entry<K, V>> entrySet() {
-        return this.internalMap.entrySet();
+        Map<K, V> unwrapped = unwrap(this.internalMap);
+        return unwrapped.entrySet();
     }
 
     public V getOrDefault(Object key, V defaultValue) {
-        return this.internalMap.getOrDefault(key, defaultValue);
+        return this.internalMap.getOrDefault(key, ExpirableValue.of(defaultValue)).getValue();
     }
 
     public void forEach(BiConsumer<? super K, ? super V> action) {
-        this.internalMap.forEach(action);
+        this.internalMap.forEach((k, v) -> action.accept(k, v.getValue()));
     }
 
     public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
-        this.internalMap.replaceAll(function);
+        this.internalMap.replaceAll((k, v) -> ExpirableValue.of(function.apply(k, v.getValue())));
     }
 
     public V putIfAbsent(K key, V value) {
-        return this.internalMap.putIfAbsent(key, value);
+        ExpirableValue<V> previous = this.internalMap.putIfAbsent(key, ExpirableValue.of(value));
+        if(previous != null){
+            return previous.getValue();
+        }
+        return null;
     }
 
     public boolean remove(Object key, Object value) {
-        return this.internalMap.remove(key,value);
+        return this.internalMap.remove(key,ExpirableValue.of(value));
     }
 
     public boolean replace(K key, V oldValue, V newValue) {
-        return this.internalMap.replace(key, oldValue, newValue);
+        return this.internalMap.replace(key, ExpirableValue.of(oldValue), ExpirableValue.of(newValue));
     }
 
     public V replace(K key, V value) {
-        return this.internalMap.replace(key, value);
+        ExpirableValue<V> replaced = this.internalMap.replace(key, ExpirableValue.of(value));
+        if(replaced != null){
+            return replaced.getValue();
+        }
+        return null;
     }
 
     public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
-        return this.internalMap.computeIfAbsent(key, mappingFunction);
+        return this.internalMap.computeIfAbsent(key, k -> ExpirableValue.of(mappingFunction.apply(k))).getValue();
     }
 
     public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        return this.internalMap.computeIfPresent(key, remappingFunction);
+        return this.internalMap.computeIfPresent(key, (k, v) -> ExpirableValue.of(remappingFunction.apply(k, v.getValue()))).getValue();
     }
 
     public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        return this.internalMap.compute(key, remappingFunction);
+        return this.internalMap.compute(key, (k, v) ->
+            ExpirableValue.of(remappingFunction.apply(k, v != null ? v.getValue() : null))
+        ).getValue();
     }
 
     public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-        return this.internalMap.merge(key, value, remappingFunction);
+        return this.internalMap.merge(key, ExpirableValue.of(value), (vOld, vNew)-> ExpirableValue.of(remappingFunction.apply(vOld.getValue(), vNew.getValue()))).getValue();
+    }
+
+    private Map<K, V> unwrap(Map<K, ExpirableValue<V>> map){
+        Map<K, V> unwrappedMap = new HashMap<>();
+        map.forEach((k, v) -> unwrappedMap.put(k, v.getValue()));
+        return unwrappedMap;
     }
 
     static class ExpirableValue<V>{
@@ -127,15 +156,15 @@ abstract class AbstractExpirableMap<K, V> {
             return System.currentTimeMillis() > this.timestamp;
         }
 
-        public Optional<V> getValueAsOptional(){
-            return Optional.ofNullable(this.value);
+        V getValue(){
+            return this.value;
         }
 
-        public static <V> ExpirableValue<V> empty(){
+        static <V> ExpirableValue<V> empty(){
             return (ExpirableValue<V>) EMPTY;
         }
 
-        public static <V> ExpirableValue<V> of(V value){
+        static <V> ExpirableValue<V> of(V value){
             return new ExpirableValue<>(value);
         }
 
