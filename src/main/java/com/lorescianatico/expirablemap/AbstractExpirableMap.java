@@ -75,8 +75,7 @@ abstract class AbstractExpirableMap<K, V> {
     }
 
     public Set<Map.Entry<K, V>> entrySet() {
-        Map<K, V> unwrapped = unwrap(this.internalMap);
-        return unwrapped.entrySet();
+        return internalMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getValue())).entrySet();
     }
 
     public V getOrDefault(Object key, V defaultValue) {
@@ -131,12 +130,6 @@ abstract class AbstractExpirableMap<K, V> {
 
     public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         return this.internalMap.merge(key, ExpirableValue.of(value), (vOld, vNew)-> ExpirableValue.of(remappingFunction.apply(vOld.getValue(), vNew.getValue()))).getValue();
-    }
-
-    private Map<K, V> unwrap(Map<K, ExpirableValue<V>> map){
-        Map<K, V> unwrappedMap = new HashMap<>();
-        map.forEach((k, v) -> unwrappedMap.put(k, v.getValue()));
-        return unwrappedMap;
     }
 
     static class ExpirableValue<V>{
