@@ -1,6 +1,9 @@
 package com.lorescianatico.expirablemap;
 
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -12,11 +15,15 @@ abstract class AbstractExpirableMap<K, V> {
 
     protected Map<K, ExpirableValue<V>> internalMap;
 
-    protected long timeout;
+    private long timeout;
+
+    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
     AbstractExpirableMap(long timeout) {
         this.internalMap = new WeakHashMap<>();
         this.timeout = timeout;
+        this.executorService.scheduleWithFixedDelay(this::removeExpiredElements, 0, this.timeout, TimeUnit.MILLISECONDS);
+        Runtime.getRuntime().addShutdownHook(new Thread(executorService::shutdownNow));
     }
 
     public int size() {
@@ -32,7 +39,7 @@ abstract class AbstractExpirableMap<K, V> {
     }
 
     public boolean containsValue(Object value) {
-        return this.internalMap.containsValue(ExpirableValue.of(value));
+        return this.internalMap.containsValue(ExpirableValue.of(value, this.timeout));
     }
 
     public V get(Object key) {
@@ -44,7 +51,7 @@ abstract class AbstractExpirableMap<K, V> {
     }
 
     public V put(K key, V value) {
-        ExpirableValue<V> previousValue = this.internalMap.put(key, ExpirableValue.of(value));
+        ExpirableValue<V> previousValue = this.internalMap.put(key, ExpirableValue.of(value, this.timeout));
         if (previousValue != null){
             return previousValue.getValue();
         }
@@ -56,7 +63,7 @@ abstract class AbstractExpirableMap<K, V> {
     }
 
     public void putAll(Map<? extends K, ? extends V> m) {
-        m.forEach((k, v) -> this.internalMap.put(k, ExpirableValue.of(v)));
+        m.forEach((k, v) -> this.internalMap.put(k, ExpirableValue.of(v, this.timeout)));
     }
 
     public void clear() {
@@ -79,7 +86,7 @@ abstract class AbstractExpirableMap<K, V> {
     }
 
     public V getOrDefault(Object key, V defaultValue) {
-        return this.internalMap.getOrDefault(key, ExpirableValue.of(defaultValue)).getValue();
+        return this.internalMap.getOrDefault(key, ExpirableValue.of(defaultValue, this.timeout)).getValue();
     }
 
     public void forEach(BiConsumer<? super K, ? super V> action) {
@@ -87,11 +94,11 @@ abstract class AbstractExpirableMap<K, V> {
     }
 
     public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
-        this.internalMap.replaceAll((k, v) -> ExpirableValue.of(function.apply(k, v.getValue())));
+        this.internalMap.replaceAll((k, v) -> ExpirableValue.of(function.apply(k, v.getValue()), this.timeout));
     }
 
     public V putIfAbsent(K key, V value) {
-        ExpirableValue<V> previous = this.internalMap.putIfAbsent(key, ExpirableValue.of(value));
+        ExpirableValue<V> previous = this.internalMap.putIfAbsent(key, ExpirableValue.of(value, this.timeout));
         if(previous != null){
             return previous.getValue();
         }
@@ -99,15 +106,15 @@ abstract class AbstractExpirableMap<K, V> {
     }
 
     public boolean remove(Object key, Object value) {
-        return this.internalMap.remove(key,ExpirableValue.of(value));
+        return this.internalMap.remove(key,ExpirableValue.of(value, this.timeout));
     }
 
     public boolean replace(K key, V oldValue, V newValue) {
-        return this.internalMap.replace(key, ExpirableValue.of(oldValue), ExpirableValue.of(newValue));
+        return this.internalMap.replace(key, ExpirableValue.of(oldValue, this.timeout), ExpirableValue.of(newValue, this.timeout));
     }
 
     public V replace(K key, V value) {
-        ExpirableValue<V> replaced = this.internalMap.replace(key, ExpirableValue.of(value));
+        ExpirableValue<V> replaced = this.internalMap.replace(key, ExpirableValue.of(value, this.timeout));
         if(replaced != null){
             return replaced.getValue();
         }
@@ -115,37 +122,52 @@ abstract class AbstractExpirableMap<K, V> {
     }
 
     public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
-        return this.internalMap.computeIfAbsent(key, k -> ExpirableValue.of(mappingFunction.apply(k))).getValue();
+        return this.internalMap.computeIfAbsent(key, k -> ExpirableValue.of(mappingFunction.apply(k), this.timeout)).getValue();
     }
 
     public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        return this.internalMap.computeIfPresent(key, (k, v) -> ExpirableValue.of(remappingFunction.apply(k, v.getValue()))).getValue();
+        return this.internalMap.computeIfPresent(key, (k, v) -> ExpirableValue.of(remappingFunction.apply(k, v.getValue()), this.timeout)).getValue();
     }
 
     public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         return this.internalMap.compute(key, (k, v) ->
-            ExpirableValue.of(remappingFunction.apply(k, v != null ? v.getValue() : null))
+            ExpirableValue.of(remappingFunction.apply(k, v != null ? v.getValue() : null), this.timeout)
         ).getValue();
     }
 
     public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-        return this.internalMap.merge(key, ExpirableValue.of(value), (vOld, vNew)-> ExpirableValue.of(remappingFunction.apply(vOld.getValue(), vNew.getValue()))).getValue();
+        return this.internalMap.merge(key, ExpirableValue.of(value, this.timeout),
+                (vOld, vNew)-> ExpirableValue.of(remappingFunction.apply(vOld.getValue(), vNew.getValue()), this.timeout)).getValue();
+    }
+
+    @Override
+    public String toString() {
+        return "AbstractExpirableMap{" +
+                "internalMap=" + internalMap +
+                ", timeout=" + timeout +
+                '}';
+    }
+
+    private void removeExpiredElements() {
+        List<K> expiredKeys = this.internalMap.entrySet().stream()
+                .filter(entry -> entry.getValue().hasExpired())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+        expiredKeys.forEach(internalMap::remove);
     }
 
     static class ExpirableValue<V>{
-
-        private static final ExpirableValue EMPTY = of(null);
 
         private V value;
 
         private long timestamp;
 
-        private ExpirableValue(V value) {
+        private ExpirableValue(V value, long timeToLive) {
             this.value = value;
-            this.timestamp = System.currentTimeMillis();
+            this.timestamp = System.currentTimeMillis() + timeToLive;
         }
 
-        public boolean hasExpired(){
+        boolean hasExpired(){
             return System.currentTimeMillis() > this.timestamp;
         }
 
@@ -153,12 +175,8 @@ abstract class AbstractExpirableMap<K, V> {
             return this.value;
         }
 
-        static <V> ExpirableValue<V> empty(){
-            return (ExpirableValue<V>) EMPTY;
-        }
-
-        static <V> ExpirableValue<V> of(V value){
-            return new ExpirableValue<>(value);
+        static <V> ExpirableValue<V> of(V value, long timeTolive){
+            return new ExpirableValue<>(value, timeTolive);
         }
 
         @Override
@@ -172,6 +190,14 @@ abstract class AbstractExpirableMap<K, V> {
         @Override
         public int hashCode() {
             return Objects.hash(value);
+        }
+
+        @Override
+        public String toString() {
+            return "ExpirableValue{" +
+                    "value=" + value +
+                    ", timestamp=" + timestamp +
+                    '}';
         }
     }
 }

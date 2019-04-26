@@ -219,4 +219,26 @@ class ExpirableMapTest {
         assertEquals("ab",map.merge("A", "b", (v1, v2)->v1+v2));
         assertEquals("b",map.merge("B", "b", (v1, v2)->v1.toLowerCase()));
     }
+
+    @Test
+    void testRemovalOfExpiredElements() throws Exception{
+        Map<String, String> map = new ExpirableMap<>(2000); //two seconds
+        map.put("A", "a");
+        Thread.sleep(1000); //one second
+        map.put("B", "b");
+        assertEquals(2, map.size());
+        Thread.sleep(1500); //1.5 seconds
+        assertEquals(1, map.size());
+        assertFalse(map.containsKey("A"));
+        Thread.sleep(2000); //two seconds
+        assertTrue(map.isEmpty());
+    }
+
+    @Test
+    void toStringTest(){
+        Map<String, String> map = new ExpirableMap<>(); //two seconds
+        map.put("A", "a");
+        map.put("B", "b");
+        assertNotNull(map.toString());
+    }
 }
