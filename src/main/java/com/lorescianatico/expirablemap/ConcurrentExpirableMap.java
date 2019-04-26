@@ -1,8 +1,11 @@
 package com.lorescianatico.expirablemap;
 
+import lombok.ToString;
+
 import java.util.Collections;
 import java.util.concurrent.ConcurrentMap;
 
+@ToString(callSuper = true)
 public final class ConcurrentExpirableMap<K,V> extends AbstractExpirableMap<K,V> implements ConcurrentMap<K,V> {
 
     public ConcurrentExpirableMap() {
@@ -12,13 +15,5 @@ public final class ConcurrentExpirableMap<K,V> extends AbstractExpirableMap<K,V>
     public ConcurrentExpirableMap(long timeout) {
         super(timeout);
         this.internalMap = Collections.synchronizedMap(internalMap);
-    }
-
-    @Override
-    public String toString() {
-        return "ConcurrentExpirableMap{" +
-                "internalMap=" + internalMap +
-                ", timeout=" + timeout +
-                '}';
     }
 }

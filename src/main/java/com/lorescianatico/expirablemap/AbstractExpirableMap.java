@@ -1,5 +1,8 @@
 package com.lorescianatico.expirablemap;
 
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -11,6 +14,8 @@ import java.util.stream.Collectors;
 
 import static com.lorescianatico.expirablemap.AbstractExpirableMap.ExpirableValue.of;
 
+@EqualsAndHashCode(of = {"internalMap", "timeout"})
+@ToString(of = {"internalMap", "timeout"})
 abstract class AbstractExpirableMap<K, V> {
 
     protected static final int DEFAULT_TIMEOUT = 10_000; //ten seconds
@@ -150,6 +155,8 @@ abstract class AbstractExpirableMap<K, V> {
         expiredKeys.forEach(internalMap::remove);
     }
 
+    @EqualsAndHashCode(of = "value")
+    @ToString
     static class ExpirableValue<V>{
 
         private V value;
@@ -171,27 +178,6 @@ abstract class AbstractExpirableMap<K, V> {
 
         static <V> ExpirableValue<V> of(V value, long timeTolive){
             return new ExpirableValue<>(value, timeTolive);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ExpirableValue<?> that = (ExpirableValue<?>) o;
-            return Objects.equals(value, that.value);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(value);
-        }
-
-        @Override
-        public String toString() {
-            return "ExpirableValue{" +
-                    "value=" + value +
-                    ", timestamp=" + timestamp +
-                    '}';
         }
     }
 }

@@ -1,8 +1,10 @@
 package com.lorescianatico.expirablemap;
 
+import lombok.ToString;
+
 import java.util.Map;
 
-
+@ToString(callSuper = true)
 public final class ExpirableMap<K,V> extends AbstractExpirableMap<K, V> implements Map<K,V> {
 
     public ExpirableMap() {
@@ -11,14 +13,6 @@ public final class ExpirableMap<K,V> extends AbstractExpirableMap<K, V> implemen
 
     public ExpirableMap(long timeout) {
         super(timeout);
-    }
-
-    @Override
-    public String toString() {
-        return "ExpirableMap{" +
-                "internalMap=" + internalMap +
-                ", timeout=" + timeout +
-                '}';
     }
 
 }
