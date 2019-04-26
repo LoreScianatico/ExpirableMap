@@ -13,4 +13,12 @@ public final class ExpirableMap<K,V> extends AbstractExpirableMap<K, V> implemen
         super(timeout);
     }
 
+    @Override
+    public String toString() {
+        return "ExpirableMap{" +
+                "internalMap=" + internalMap +
+                ", timeout=" + timeout +
+                '}';
+    }
+
 }

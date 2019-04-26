@@ -13,4 +13,12 @@ public final class ConcurrentExpirableMap<K,V> extends AbstractExpirableMap<K,V>
         super(timeout);
         this.internalMap = Collections.synchronizedMap(internalMap);
     }
+
+    @Override
+    public String toString() {
+        return "ConcurrentExpirableMap{" +
+                "internalMap=" + internalMap +
+                ", timeout=" + timeout +
+                '}';
+    }
 }

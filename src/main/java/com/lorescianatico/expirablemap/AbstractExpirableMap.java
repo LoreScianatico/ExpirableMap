@@ -15,7 +15,7 @@ abstract class AbstractExpirableMap<K, V> {
 
     protected Map<K, ExpirableValue<V>> internalMap;
 
-    private long timeout;
+    protected long timeout;
 
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
@@ -138,14 +138,6 @@ abstract class AbstractExpirableMap<K, V> {
     public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         return this.internalMap.merge(key, ExpirableValue.of(value, this.timeout),
                 (vOld, vNew)-> ExpirableValue.of(remappingFunction.apply(vOld.getValue(), vNew.getValue()), this.timeout)).getValue();
-    }
-
-    @Override
-    public String toString() {
-        return "AbstractExpirableMap{" +
-                "internalMap=" + internalMap +
-                ", timeout=" + timeout +
-                '}';
     }
 
     private void removeExpiredElements() {
