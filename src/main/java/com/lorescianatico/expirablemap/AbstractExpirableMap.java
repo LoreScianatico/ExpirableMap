@@ -17,7 +17,7 @@ abstract class AbstractExpirableMap<K, V> {
 
     private long timeout;
 
-    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
     AbstractExpirableMap(long timeout) {
         this.internalMap = new WeakHashMap<>();
