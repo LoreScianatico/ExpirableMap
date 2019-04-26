@@ -62,6 +62,8 @@ class ExpirableMapTest {
         Map<String, String> map = new ExpirableMap<>();
         map.put("A", "value");
         assertEquals("value", map.get("A"));
+        assertEquals("value", map.put("A", "new value"));
+        assertEquals("new value", map.get("A"));
     }
 
     @Test
@@ -113,6 +115,7 @@ class ExpirableMapTest {
         map.put("A", "a");
         map.put("B", "b");
         map.put("C", "c");
+        map.put("D", null);
         Collection<String> values = map.values();
         assertEquals(3, values.size());
         assertTrue(values.contains("a"));
