@@ -26,9 +26,32 @@ abstract class AbstractExpirableMap<K, V> {
 
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
-    AbstractExpirableMap(long timeout) {
+    AbstractExpirableMap(long timeout, TimeUnit timeUnit) {
         this.internalMap = new WeakHashMap<>();
-        this.timeout = timeout;
+        this.timeout = TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
+        this.executorService.scheduleWithFixedDelay(this::removeExpiredElements, 0, this.timeout, TimeUnit.MILLISECONDS);
+        Runtime.getRuntime().addShutdownHook(new Thread(executorService::shutdownNow));
+    }
+
+    AbstractExpirableMap(int initialCapacity, float loadFactor, long timeout, TimeUnit timeUnit) {
+        this.internalMap = new WeakHashMap<>(initialCapacity, loadFactor);
+        this.timeout = TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
+        this.executorService.scheduleWithFixedDelay(this::removeExpiredElements, 0, this.timeout, TimeUnit.MILLISECONDS);
+        Runtime.getRuntime().addShutdownHook(new Thread(executorService::shutdownNow));
+    }
+
+    AbstractExpirableMap(int initialCapacity, long timeout, TimeUnit timeUnit) {
+        this.internalMap = new WeakHashMap<>(initialCapacity);
+        this.timeout = TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
+        this.executorService.scheduleWithFixedDelay(this::removeExpiredElements, 0, this.timeout, TimeUnit.MILLISECONDS);
+        Runtime.getRuntime().addShutdownHook(new Thread(executorService::shutdownNow));
+    }
+
+    AbstractExpirableMap(Map<? extends K, ? extends V> m, long timeout, TimeUnit timeUnit) {
+        this.timeout = TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
+        Map<K, ExpirableValue<V>> wrappedMap = new WeakHashMap<>();
+        m.forEach((k, v) -> wrappedMap.put(k, of(v,timeout)));
+        this.internalMap = new WeakHashMap<>(wrappedMap);
         this.executorService.scheduleWithFixedDelay(this::removeExpiredElements, 0, this.timeout, TimeUnit.MILLISECONDS);
         Runtime.getRuntime().addShutdownHook(new Thread(executorService::shutdownNow));
     }
