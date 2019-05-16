@@ -229,7 +229,7 @@ class ExpirableMapTest {
         Thread.sleep(1000); //one second
         map.put("B", "b");
         assertEquals(2, map.size());
-        Thread.sleep(2500); //2.5 seconds
+        Thread.sleep(2750); //2.5 seconds
         assertEquals(1, map.size());
         assertFalse(map.containsKey("A"));
         Thread.sleep(3000); //three seconds
