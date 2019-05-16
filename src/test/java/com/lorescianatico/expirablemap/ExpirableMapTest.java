@@ -231,11 +231,12 @@ class ExpirableMapTest {
         assertEquals(2, map.size());
         Thread.sleep(2500); //2.5 seconds
         assertTrue(map.size()<=2);
-        assertFalse(map.containsKey("A"));
         Thread.sleep(3000); //three seconds
         assertTrue(map.size()<=1);
         Thread.sleep(2000);
         assertTrue(map.isEmpty());
+        assertFalse(map.containsKey("A"));
+        assertFalse(map.containsKey("B"));
     }
 
     @Test
