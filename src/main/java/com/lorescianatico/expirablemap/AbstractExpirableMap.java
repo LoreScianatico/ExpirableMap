@@ -180,7 +180,7 @@ abstract class AbstractExpirableMap<K, V> {
 
     @EqualsAndHashCode(of = "value")
     @ToString
-    static class ExpirableValue<V>{
+    protected static class ExpirableValue<V>{
 
         private V value;
 

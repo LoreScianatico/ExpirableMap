@@ -2,6 +2,7 @@ package com.lorescianatico.expirablemap;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -21,5 +22,14 @@ class ConcurrentExpirableMapTest {
         map.put("A", "a");
         map.put("B", "b");
         assertNotNull(map.toString());
+    }
+
+    @Test
+    void testConstructors(){
+        assertNotNull(new ConcurrentExpirableMap<String, String>(20, 2, TimeUnit.SECONDS));
+        assertNotNull(new ConcurrentExpirableMap<String, String>(20, 0.80F, 2, TimeUnit.SECONDS));
+        Map<String, String> map = new HashMap<>();
+        map.put("A", "a");
+        assertNotNull(new ConcurrentExpirableMap<String, String>(map, 2, TimeUnit.SECONDS));
     }
 }

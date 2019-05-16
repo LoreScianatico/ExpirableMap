@@ -3,8 +3,10 @@ package com.lorescianatico.expirablemap;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -222,7 +224,7 @@ class ExpirableMapTest {
 
     @Test
     void testRemovalOfExpiredElements() throws Exception{
-        Map<String, String> map = new ExpirableMap<>(3000); //three seconds
+        Map<String, String> map = new ExpirableMap<>(3000, TimeUnit.MILLISECONDS); //three seconds
         map.put("A", "a");
         Thread.sleep(1000); //one second
         map.put("B", "b");
@@ -240,5 +242,14 @@ class ExpirableMapTest {
         map.put("A", "a");
         map.put("B", "b");
         assertNotNull(map.toString());
+    }
+
+    @Test
+    void testConstructors(){
+        assertNotNull(new ExpirableMap<String, String>(20, 2, TimeUnit.SECONDS));
+        assertNotNull(new ExpirableMap<String, String>(20, 0.80F, 2, TimeUnit.SECONDS));
+        Map<String, String> map = new HashMap<>();
+        map.put("A", "a");
+        assertNotNull(new ExpirableMap<String, String>(map, 2, TimeUnit.SECONDS));
     }
 }
