@@ -75,6 +75,7 @@ class ExpirableMapTest {
         assertEquals("value", map.get("A"));
         map.remove("A");
         assertNull(map.get("A"));
+        assertNull(map.remove("A"));
     }
 
     @Test
