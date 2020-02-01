@@ -74,22 +74,17 @@ abstract class AbstractExpirableMap<K, V> {
 
     public V get(Object key) {
         ExpirableValue<V> value = this.internalMap.get(key);
-        if(value != null) {
-            return value.getValue();
-        }
-        return null;
+        return value == null ? null : value.getValue();
     }
 
     public V put(K key, V value) {
         ExpirableValue<V> previousValue = this.internalMap.put(key, of(value, this.timeout));
-        if (previousValue != null){
-            return previousValue.getValue();
-        }
-        return null;
+        return previousValue == null ? null : previousValue.getValue();
     }
 
     public V remove(Object key) {
-        return this.internalMap.remove(key).getValue();
+        ExpirableValue<V> removed = this.internalMap.remove(key);
+        return removed == null ? null : removed.getValue();
     }
 
     public void putAll(Map<? extends K, ? extends V> m) {
@@ -129,10 +124,7 @@ abstract class AbstractExpirableMap<K, V> {
 
     public V putIfAbsent(K key, V value) {
         ExpirableValue<V> previous = this.internalMap.putIfAbsent(key, of(value, this.timeout));
-        if(previous != null){
-            return previous.getValue();
-        }
-        return null;
+        return previous == null ? null : previous.getValue();
     }
 
     public boolean remove(Object key, Object value) {
@@ -145,10 +137,7 @@ abstract class AbstractExpirableMap<K, V> {
 
     public V replace(K key, V value) {
         ExpirableValue<V> replaced = this.internalMap.replace(key, of(value, this.timeout));
-        if(replaced != null){
-            return replaced.getValue();
-        }
-        return null;
+        return replaced == null ? null : replaced.getValue();
     }
 
     public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
